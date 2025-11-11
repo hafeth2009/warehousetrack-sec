@@ -4,32 +4,41 @@ import {
   Home,
   Package,
   Users,
-  Settings,
-  BarChart3,
-  Truck,
-  ClipboardList,
-  Shield,
-  Bell,
+  FileText,
+  Calendar,
   LogOut
 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import companyLogo from "@/assets/company-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar = ({ className }: SidebarProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const menuItems = [
-    { icon: Home, label: "الرئيسية", active: true },
-    { icon: Package, label: "إدارة المستودعات", badge: "24" },
-    { icon: Users, label: "إدارة الموظفين" },
-    { icon: Truck, label: "إدارة المعدات" },
-    { icon: ClipboardList, label: "التقارير" },
-    { icon: BarChart3, label: "الإحصائيات" },
-    { icon: Shield, label: "الأمان والصلاحيات" },
-    { icon: Bell, label: "الإشعارات", badge: "3" },
-    { icon: Settings, label: "الإعدادات" },
+    { icon: Home, label: "الرئيسية", path: "/" },
+    { icon: Users, label: "إدارة الموظفين", path: "/employees" },
+    { icon: FileText, label: "العقود والمقايسات", path: "/contracts" },
+    { icon: Package, label: "المستودعات", path: "/warehouse" },
+    { icon: Calendar, label: "البرنامج اليومي", path: "/daily-program" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/auth");
+    } catch (error) {
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
+  };
 
   return (
     <div className={cn(
@@ -63,29 +72,34 @@ const Sidebar = ({ className }: SidebarProps) => {
 
       {/* Navigation */}
       <nav className="p-4 space-y-2">
-        {menuItems.map((item, index) => (
-          <Button
-            key={index}
-            variant={item.active ? "default" : "ghost"}
-            className={cn(
-              "w-full justify-start h-12 px-4 text-right",
-              item.active && "gradient-primary shadow-primary"
-            )}
-          >
-            <item.icon className="ml-3 h-5 w-5" />
-            <span className="flex-1">{item.label}</span>
-            {item.badge && (
-              <span className="bg-warning text-warning-foreground text-xs px-2 py-1 rounded-full">
-                {item.badge}
-              </span>
-            )}
-          </Button>
-        ))}
+        {menuItems.map((item, index) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Button
+              key={index}
+              variant={isActive ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start h-12 px-4 text-right",
+                isActive && "gradient-primary shadow-primary"
+              )}
+              asChild
+            >
+              <Link to={item.path}>
+                <item.icon className="ml-3 h-5 w-5" />
+                <span className="flex-1">{item.label}</span>
+              </Link>
+            </Button>
+          );
+        })}
       </nav>
 
       {/* Footer */}
       <div className="absolute bottom-4 left-4 right-4">
-        <Button variant="outline" className="w-full justify-start h-12 px-4 text-right">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start h-12 px-4 text-right"
+          onClick={handleLogout}
+        >
           <LogOut className="ml-3 h-5 w-5" />
           <span>تسجيل الخروج</span>
         </Button>
